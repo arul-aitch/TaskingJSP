@@ -1,0 +1,95 @@
+<%@ include file="/WEB-INF/jsp/common.jspf" %>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-profile">
+        <div class="avatar">${fn:substring(user.name, 0, 1)}</div>
+        <div class="who">
+            <div class="name">${user.name}</div>
+            <div class="sub">Personal Workspace</div>
+        </div>
+    </div>
+
+    <div class="sidebar-addtask">
+        <button type="button" class="btn-ghost" onclick="openModal('modal_add_task')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Task
+        </button>
+    </div>
+
+    <nav class="sidebar-nav scrollbar-none">
+        <div class="nav-section">Menu</div>
+
+        <%-- All Tasks --%>
+        <a href="${pageContext.request.contextPath}/dashboard"
+           class="nav-link ${empty param.archive and empty param.category ? 'active' : ''}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            All Tasks
+            <span class="nav-count">${globalTotal - globalCompleted}</span>
+        </a>
+
+        <%-- Archive --%>
+        <a href="${pageContext.request.contextPath}/dashboard?archive=1"
+           class="nav-link ${not empty param.archive ? 'active' : ''}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            Archive
+            <span class="nav-count">${globalCompleted}</span>
+        </a>
+
+        <%-- Progress --%>
+        <div class="nav-section">Progress</div>
+        <div style="padding: 4px 10px 8px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink-tertiary); font-weight:500; margin-bottom:6px;">
+                <span>${globalCompleted} of ${globalTotal} completed</span>
+                <span>${progress}%</span>
+            </div>
+            <div style="height:6px; background:#E5E7EB; border-radius:999px; overflow:hidden;">
+                <span style="display:block; height:100%; background:var(--primary); border-radius:999px; width:${progress}%;"></span>
+            </div>
+        </div>
+
+        <%-- Categories --%>
+        <div class="nav-section">Categories</div>
+        <c:forEach var="cat" items="${categories}">
+            <div class="nav-link ${selectedCategory != null and selectedCategory == cat.id ? 'active' : ''}" style="display:flex; align-items:center; gap:10px; padding:8px 10px;">
+                <a href="${pageContext.request.contextPath}/dashboard?category=${cat.id}" style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; color:inherit; font-size:13px; text-decoration:none;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cat.name}</span>
+                </a>
+                <span class="nav-cat-actions">
+                    <button type="button" data-edit-category="${cat.id}" data-category-name="${cat.name}" title="Edit category">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
+                    </button>
+                    <form method="POST" action="${pageContext.request.contextPath}/categories/${cat.id}" style="display:inline"
+                          onsubmit="return confirmDelete(event, 'Delete category &quot;${cat.name}&quot;? Its tasks will be kept.')">
+                        <input type="hidden" name="csrf_token" value="${csrfToken}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" title="Delete category">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-1.9-2.164H5.9c-.99 0-1.9.984-1.9 2.164v.916"/></svg>
+                        </button>
+                    </form>
+                </span>
+            </div>
+        </c:forEach>
+
+        <button type="button" class="nav-link" style="width:100%; background:none; border:none; text-align:left;"
+                onclick="openModal('modal_add_category')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Category
+        </button>
+
+        <div class="nav-section">Other</div>
+        <a href="${pageContext.request.contextPath}/profile" class="nav-link ${fn:indexOf(pageContext.request.requestURI, '/profile') >= 0 ? 'active' : ''}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.398-.165.71-.505.78-.929l.149-.894Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+            Settings
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <form method="POST" action="${pageContext.request.contextPath}/logout">
+            <input type="hidden" name="csrf_token" value="${csrfToken}">
+            <button type="submit">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg>
+                Log Out
+            </button>
+        </form>
+    </div>
+</aside>
